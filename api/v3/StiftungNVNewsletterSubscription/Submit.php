@@ -47,12 +47,17 @@ function civicrm_api3_stiftung_n_v_newsletter_subscription_submit($params) {
 
     // Add the contact to the given groups.
     $group_contacts = array();
-    foreach ($params['group_ids'] as $group_id) {
-      $group_contacts[$group_id] = civicrm_api3('GroupContact', 'create', array(
-        'group_id' => $group_id,
-        'contact_id' => $contact_id,
-        'status' => 'Added',
-      ));
+    if (!empty($params['group_ids'])) {
+      if (!is_array($params['group_ids'])) {
+        $params['group_ids'] = array($params['group_ids']);
+      }
+      foreach ($params['group_ids'] as $group_id) {
+        $group_contacts[$group_id] = civicrm_api3('GroupContact', 'create', array(
+          'group_id' => $group_id,
+          'contact_id' => $contact_id,
+          'status' => 'Added',
+        ));
+      }
     }
 
     return civicrm_api3_create_success($group_contacts, $params, NULL, NULL, $dao = NULL, array());
