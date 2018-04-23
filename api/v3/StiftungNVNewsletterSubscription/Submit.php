@@ -41,6 +41,17 @@ function civicrm_api3_stiftung_n_v_newsletter_subscription_submit($params) {
       'phone' => TRUE,
       'email' => TRUE,
     ));
+
+    // Get the custom field ID for "Institution".
+    $institution_field = civicrm_api3('CustomField', 'getsingle', array(
+      'sequential' => 1,
+      'name' => "Institution",
+    ));
+    if (!empty($institution_field['is_error'])) {
+      throw new CiviCRM_API3_Exception('Custom field "Institution" could not be found.', 'api_error');
+    }
+    $contact_data['custom_' . $institution_field['id']] = $params['institution'];
+
     if (!$contact_id = CRM_StiftungNVAPI_Submission::getContact('Individual', $contact_data)) {
       throw new CiviCRM_API3_Exception('Individual contact could not be found or created.', 'invalid_format');
     }
@@ -122,6 +133,13 @@ function _civicrm_api3_stiftung_n_v_newsletter_subscription_submit_spec(&$params
     'type'         => CRM_Utils_Type::T_STRING,
     'api.required' => 1,
     'description'  => 'The contact\'s email.',
+  );
+  $params['institution'] = array(
+    'name'         => 'institution',
+    'title'        => 'Institution',
+    'type'         => CRM_Utils_Type::T_STRING,
+    'api.required' => 0,
+    'description'  => 'The contact\'s institution or organization',
   );
   $params['group_ids'] = array(
     'name'         => 'group_ids',

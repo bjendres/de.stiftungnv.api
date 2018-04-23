@@ -44,4 +44,5 @@ The extension provides the following API calls:
 | `last_name`    | string | 1           | yes      | maxlength 64                  | The contact's last name.                             |
 | `phone`        | string | 1           | no       |                               | The contact's phone number.                          |
 | `email`        | string | 1           | yes      | A valid e-mail address        | The contact's e-mail address.                        |
+| `institution`  | string | 1           | no       | maxlength 255                 | The contact's institution or organization.           |
 | `group_ids`    | int[]  | 1           | yes      | An array of CiviCRM group IDs | The IDs of the CiviCRM groups to add the contact to. |
