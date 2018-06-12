@@ -78,12 +78,13 @@ function civicrm_api3_stiftung_n_v_newsletter_subscription_submit($params) {
       if (!empty($current_subjects['custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS])) {
         $current_subjects = array_values($current_subjects['custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS]);
       }
-      else
+      else {
         $current_subjects = array();
-      $subjects = array_unique($current_subjects + $params['group_ids']);
+      }
+      $subjects = array_unique(array_merge($current_subjects, $params['group_ids']));
       civicrm_api3('Contact', 'create', array(
         'id' => $contact_id,
-        'custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS => array_unique($current_subjects + $params['group_ids']),
+        'custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS => $subjects,
       ));
     }
 
