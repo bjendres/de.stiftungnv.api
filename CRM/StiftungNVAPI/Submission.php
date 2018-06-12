@@ -16,6 +16,8 @@
 
 class CRM_StiftungNVAPI_Submission {
 
+  const CUSTOM_FIELD_ID_SUBJECTS = 2;
+
   /**
    * Retrieves the contact matching the given contact data or creates a new
    * contact.

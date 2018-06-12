@@ -56,7 +56,7 @@ function civicrm_api3_stiftung_n_v_newsletter_subscription_submit($params) {
       throw new CiviCRM_API3_Exception('Individual contact could not be found or created.', 'invalid_format');
     }
 
-    // Add the contact to the given groups.
+    // Add the contact to the given groups and set the respective custom field.
     $group_contacts = array();
     if (!empty($params['group_ids'])) {
       if (!is_array($params['group_ids'])) {
@@ -69,6 +69,22 @@ function civicrm_api3_stiftung_n_v_newsletter_subscription_submit($params) {
           'status' => 'Added',
         ));
       }
+
+      // Set custom field.
+      $current_subjects = civicrm_api3('Contact', 'getsingle', array(
+        'return' => 'custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS,
+        'id' => $contact_id,
+      ));
+      if (!empty($current_subjects['custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS])) {
+        $current_subjects = array_values($current_subjects['custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS]);
+      }
+      else
+        $current_subjects = array();
+      $subjects = array_unique($current_subjects + $params['group_ids']);
+      civicrm_api3('Contact', 'create', array(
+        'id' => $contact_id,
+        'custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS => array_unique($current_subjects + $params['group_ids']),
+      ));
     }
 
     return civicrm_api3_create_success($group_contacts, $params, NULL, NULL, $dao = NULL, array());
