@@ -91,15 +91,15 @@ function civicrm_api3_stiftung_n_v_newsletter_subscription_submit($params) {
     return civicrm_api3_create_success($group_contacts, $params, NULL, NULL, $dao = NULL, array());
 
   }
-   catch (CiviCRM_API3_Exception $exception) {
-     if (defined('STIFTUNGNV_API_LOGGING') && STIFTUNGNV_API_LOGGING) {
-       CRM_Core_Error::debug_log_message('StiftungNVNewsletterSubscription:submit:Exception caught: ' . $exception->getMessage());
-     }
+  catch (CiviCRM_API3_Exception $exception) {
+    if (defined('STIFTUNGNV_API_LOGGING') && STIFTUNGNV_API_LOGGING) {
+      CRM_Core_Error::debug_log_message('StiftungNVNewsletterSubscription:submit:Exception caught: ' . $exception->getMessage());
+    }
 
-     $extraParams = $exception->getExtraParams();
+    $extraParams = $exception->getExtraParams();
 
-     return civicrm_api3_create_error($exception->getMessage(), $extraParams);
-   }
+    return civicrm_api3_create_error($exception->getMessage(), $extraParams);
+  }
 }
 
 /**
