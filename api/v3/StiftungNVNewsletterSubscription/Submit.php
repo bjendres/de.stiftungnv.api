@@ -42,18 +42,26 @@ function civicrm_api3_stiftung_n_v_newsletter_subscription_submit($params) {
       'email' => TRUE,
     ));
 
-    // Get the custom field ID for "Institution".
-    $institution_field = civicrm_api3('CustomField', 'getsingle', array(
-      'sequential' => 1,
-      'name' => "Institution",
-    ));
-    if (!empty($institution_field['is_error'])) {
-      throw new CiviCRM_API3_Exception('Custom field "Institution" could not be found.', 'api_error');
+    if (!empty($params['institution'])) {
+      // Get the custom field ID for "Institution".
+      $institution_field = civicrm_api3('CustomField', 'getsingle', array(
+        'sequential' => 1,
+        'name' => "Institution",
+      ));
+      if (!empty($institution_field['is_error'])) {
+        throw new CiviCRM_API3_Exception('Custom field "Institution" could not be found.', 'api_error');
+      }
+      $contact_data['custom_' . $institution_field['id']] = $params['institution'];
     }
-    $contact_data['custom_' . $institution_field['id']] = $params['institution'];
 
     if (!$contact_id = CRM_StiftungNVAPI_Submission::getContact('Individual', $contact_data)) {
       throw new CiviCRM_API3_Exception('Individual contact could not be found or created.', 'invalid_format');
+    }
+
+    // If given the flag, update contact data with the submitted values.
+    if (isset($params['update_contact']) && $params['update_contact'] == 1) {
+      $contact_data['id'] = $contact_id;
+      civicrm_api3('Contact', 'create', $contact_data);
     }
 
     // Add the contact to the given groups and set the respective custom field.
@@ -164,5 +172,12 @@ function _civicrm_api3_stiftung_n_v_newsletter_subscription_submit_spec(&$params
     'type'         => CRM_Utils_Type::T_STRING,
     'api.required' => 1,
     'description'  => 'The IDs of the mailing list groups to subscribe the contact to.',
+  );
+  $params['update_contact'] = array(
+    'name' => 'update_contact',
+    'title' => 'Update contact',
+    'type' => CRM_Utils_Type::T_BOOLEAN,
+    'api.required' => 0,
+    'description' => 'Whether the provided contact data should overwrite possibly existing data on the contact.',
   );
 }
