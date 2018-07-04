@@ -70,6 +70,30 @@ function civicrm_api3_stiftung_n_v_newsletter_subscription_submit($params) {
       if (!is_array($params['group_ids'])) {
         $params['group_ids'] = array($params['group_ids']);
       }
+      // Get all mailing lists.
+      $mailing_lists = civicrm_api3('Group', 'get', array(
+        'is_active' => 1,
+        'group_type' => array(
+          'LIKE' => '%2%',
+        ),
+        'option.limit' => 0,
+      ));
+      $mailing_lists = array_keys($mailing_lists['values']);
+
+      // Retrieve all groups the contact is currently member of.
+      $current_groups_result = civicrm_api3('Contact', 'getsingle', array(
+        'sequential' => 1,
+        'return' => 'group',
+        'option.limit' => 0,
+        'contact_id' => $contact_id,
+      ));
+      $current_groups_unfiltered = explode(',', $current_groups_result['groups']);
+      // Filter for mailing lists only.
+      $current_groups = array_intersect($current_groups_unfiltered, $mailing_lists);
+      // Decide which mailing list the contact is to be removed from.
+      $remove = array_diff($current_groups, $params['group_ids']);
+
+      // Add the contact to all requested groups.
       foreach ($params['group_ids'] as $group_id) {
         $group_contacts[$group_id] = civicrm_api3('GroupContact', 'create', array(
           'group_id' => $group_id,
@@ -77,19 +101,31 @@ function civicrm_api3_stiftung_n_v_newsletter_subscription_submit($params) {
           'status' => 'Added',
         ));
       }
+      // Remove the contact from all other mailing lists they have been member
+      // of before.
+      foreach ($remove as $group_id) {
+        $group_contacts[$group_id] = civicrm_api3('GroupContact', 'create', array(
+          'group_id' => $group_id,
+          'contact_id' => $contact_id,
+          'status' => 'Removed',
+        ));
+      }
 
       // Set custom field.
-      $current_subjects = civicrm_api3('Contact', 'getsingle', array(
-        'return' => 'custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS,
-        'id' => $contact_id,
-      ));
-      if (!empty($current_subjects['custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS])) {
-        $current_subjects = array_values($current_subjects['custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS]);
-      }
-      else {
-        $current_subjects = array();
-      }
-      $subjects = array_unique(array_merge($current_subjects, $params['group_ids']));
+//      $current_subjects = civicrm_api3('Contact', 'getsingle', array(
+//        'return' => 'custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS,
+//        'id' => $contact_id,
+//      ));
+//      if (!empty($current_subjects['custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS])) {
+//        $current_subjects = array_values($current_subjects['custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS]);
+//      }
+//      else {
+//        $current_subjects = array();
+//      }
+//      $subjects = array_unique(array_merge($current_subjects, $params['group_ids']));
+      // Do not merge, but overwrite the current selection, therefore the above
+      // is commented.
+      $subjects = $params['group_ids'];
       civicrm_api3('Contact', 'create', array(
         'id' => $contact_id,
         'custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS => $subjects,
