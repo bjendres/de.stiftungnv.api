@@ -65,6 +65,15 @@ function civicrm_api3_stiftung_n_v_newsletter_subscription_submit($params) {
       civicrm_api3('Contact', 'create', $contact_data);
     }
 
+    // Add tag 19 ("english") for english contacts.
+    if ($params['language'] == 'en') {
+      civicrm_api3('EntityTag', 'create', array(
+        'entity_table' => 'civicrm_contact',
+        'entity_id' => $contact_id,
+        'tag_id' => 19,
+      ));
+    }
+
     // Add the contact to the given groups and set the respective custom field.
     $group_contacts = array();
     if (!empty($params['group_ids'])) {
@@ -216,5 +225,12 @@ function _civicrm_api3_stiftung_n_v_newsletter_subscription_submit_spec(&$params
     'type' => CRM_Utils_Type::T_BOOLEAN,
     'api.required' => 0,
     'description' => 'Whether the provided contact data should overwrite possibly existing data on the contact.',
+  );
+  $params['language'] = array(
+    'name' => 'language',
+    'title' => 'Language',
+    'type' => CRM_Utils_Type::T_STRING,
+    'api.required' => 0,
+    'description' => 'The language used for the submitting form.',
   );
 }
