@@ -40,6 +40,7 @@ function civicrm_api3_stiftung_n_v_newsletter_subscription_submit($params) {
       'last_name' => TRUE,
       'phone' => TRUE,
       'email' => TRUE,
+      'source' => 'Newsletteranmeldung',
     ));
 
     if (!empty($params['institution'])) {
