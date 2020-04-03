@@ -40,8 +40,10 @@ function civicrm_api3_stiftung_n_v_newsletter_subscription_submit($params) {
       'last_name' => TRUE,
       'phone' => TRUE,
       'email' => TRUE,
-      'source' => 'Newsletteranmeldung',
     ));
+    $contact_data += array(
+      'source' => 'Newsletteranmeldung',
+    );
 
     if (!empty($params['institution'])) {
       // Get the custom field ID for "Institution".
