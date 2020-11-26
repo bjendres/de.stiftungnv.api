@@ -41,6 +41,16 @@ function civicrm_api3_stiftung_n_v_newsletter_subscription_submit($params) {
       'phone' => TRUE,
       'email' => TRUE,
     ));
+    // Check for existance of prefix_id
+    $prefixes = civicrm_api3(
+      'Contact',
+      'getoptions',
+      ['field' => 'prefix_id']
+    )['values'];
+    if (!array_key_exists($params['prefix_id'], $prefixes)) {
+      unset($contact_data['prefix_id']);
+    }
+
     $contact_data += array(
       'source' => 'Newsletteranmeldung',
     );
