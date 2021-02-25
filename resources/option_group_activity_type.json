@@ -1,0 +1,32 @@
+{
+  "_lookup": ["name"],
+  "name": "activity_type",
+  "_values": [
+    {
+      "_lookup": ["name"],
+      "_translate": [
+        "label",
+        "description"
+      ],
+      "label": "Delete Contact",
+      "name": "delete_contact",
+      "description": "Contact to be deleted due to missing GDPR consent.",
+      "filter": "0",
+      "is_reserved": "1",
+      "is_active": "1"
+    },
+    {
+      "_lookup": ["name"],
+      "_translate": [
+        "label",
+        "description"
+      ],
+      "label": "Event Registration",
+      "name": "event_registration",
+      "description": "New event registration.",
+      "filter": "0",
+      "is_reserved": "1",
+      "is_active": "1"
+    }
+  ]
+}
