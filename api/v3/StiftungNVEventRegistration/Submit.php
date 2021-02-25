@@ -79,7 +79,7 @@ function _civicrm_api3_stiftung_n_v_event_registration_Submit_spec(&$spec) {
     'type' => CRM_Utils_Type::T_BOOLEAN,
     'api.required' => 0,
     'api.default' => 0,
-    'description' => 'Whether the contact wants to subscribe to the newsletter.',
+    'description' => 'Whether the contact wants to subscribe to newsletter(s).',
   );
   $spec['group_ids'] = [
     'name' => 'group_ids',
