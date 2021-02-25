@@ -55,10 +55,6 @@ function stiftungnvapi_civicrm_uninstall() {
  */
 function stiftungnvapi_civicrm_enable() {
   _stiftungnvapi_civix_civicrm_enable();
-
-  // Install activity types.
-  $customData = new CRM_StiftungNVAPI_CustomData(E::LONG_NAME);
-  $customData->syncOptionGroup(E::path('resources/option_group_activity_type.json'));
 }
 
 /**
