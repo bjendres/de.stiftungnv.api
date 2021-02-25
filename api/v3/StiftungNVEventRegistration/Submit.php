@@ -102,14 +102,6 @@ function _civicrm_api3_stiftung_n_v_event_registration_Submit_spec(&$spec) {
     'api.required' => 0,
     'description' => 'The language used for the submitting form.',
   );
-  $spec['gdpr_consent'] = array(
-    'name' => 'gdpr_consent',
-    'title' => 'Contact Details Storage Consent',
-    'type' => CRM_Utils_Type::T_BOOLEAN,
-    'api.required' => 0,
-    'api.default' => 0,
-    'description' => 'Whether the contact consented to the storage of their contact data.',
-  );
   $spec['event_id'] = array(
     'name' => 'event_id',
     'title' => 'Event ID',
@@ -221,7 +213,7 @@ function civicrm_api3_stiftung_n_v_event_registration_Submit($params) {
 
   // Create activity of type "Delete Contact" for newly created contacts without
   // GDPR consent.
-  if ($contact_was_created && empty($params['gdpr_consent'])) {
+  if ($contact_was_created && empty($params['newsletter'])) {
     $delete_activity = civicrm_api3(
       'Activity',
       'create',
