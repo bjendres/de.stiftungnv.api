@@ -27,148 +27,58 @@
 function civicrm_api3_stiftung_n_v_newsletter_subscription_submit($params) {
   // Log the API call to the CiviCRM debug log.
   if (defined('STIFTUNGNV_API_LOGGING') && STIFTUNGNV_API_LOGGING) {
-    CRM_Core_Error::debug_log_message('StiftungNVNewsletterSubscription.submit: ' . json_encode($params));
+    CRM_Core_Error::debug_log_message(
+      'StiftungNVNewsletterSubscription.submit: '
+      . json_encode($params, JSON_PRETTY_PRINT)
+    );
   }
 
   try {
     // Get the ID of the contact matching the given contact data, or create a
     // new contact if none exists for the given contact data.
-    $contact_data = array_intersect_key($params, array(
-      'prefix_id' => TRUE,
-      'formal_title' => TRUE,
-      'first_name' => TRUE,
-      'last_name' => TRUE,
-      'phone' => TRUE,
-      'email' => TRUE,
-    ));
-    // Check for existance of prefix_id
-    $prefixes = civicrm_api3(
-      'Contact',
-      'getoptions',
-      ['field' => 'prefix_id']
-    )['values'];
-    if (!array_key_exists($params['prefix_id'], $prefixes)) {
-      unset($contact_data['prefix_id']);
-    }
-
+    $contact_data = CRM_StiftungNVAPI_Submission::getContactData($params);
     $contact_data += array(
       'source' => 'Newsletteranmeldung',
     );
-
-    if (!empty($params['institution'])) {
-      // Get the custom field ID for "Institution".
-      $institution_field = civicrm_api3('CustomField', 'getsingle', array(
-        'sequential' => 1,
-        'name' => "Institution",
-      ));
-      if (!empty($institution_field['is_error'])) {
-        throw new CiviCRM_API3_Exception('Custom field "Institution" could not be found.', 'api_error');
-      }
-      $contact_data['custom_' . $institution_field['id']] = $params['institution'];
+    [$contact_id, $was_created] = CRM_StiftungNVAPI_Submission::getContact(
+      'Individual',
+      $contact_data
+    );
+    if (!$contact_id) {
+      throw new CiviCRM_API3_Exception(
+        'Individual contact could not be found or created.',
+        'invalid_format'
+      );
     }
-
-    if (!$contact_id = CRM_StiftungNVAPI_Submission::getContact('Individual', $contact_data)) {
-      throw new CiviCRM_API3_Exception('Individual contact could not be found or created.', 'invalid_format');
-    }
-
     // If given the flag, update contact data with the submitted values.
-    if (isset($params['update_contact']) && $params['update_contact'] == 1) {
+    if (!empty($params['update_contact'])) {
       $contact_data['id'] = $contact_id;
       civicrm_api3('Contact', 'create', $contact_data);
     }
 
     // Add tag 19 ("english") for english contacts.
     if ($params['language'] == 'en') {
-      try {
-        $tag_exists = civicrm_api3('EntityTag', 'getsingle', array(
-          'entity_table' => 'civicrm_contact',
-          'entity_id' => $contact_id,
-          'tag_id' => 19,
-        ));
-      }
-      catch (Exception $exception) {
-        civicrm_api3('EntityTag', 'create', array(
-          'entity_table' => 'civicrm_contact',
-          'entity_id' => $contact_id,
-          'tag_id' => 19,
-        ));
-      }
+      CRM_StiftungNVAPI_Submission::addLanguageTag($contact_id);
     }
 
     // Add the contact to the given groups and set the respective custom field.
     $group_contacts = array();
     if (!empty($params['group_ids'])) {
-      if (!is_array($params['group_ids'])) {
-        $params['group_ids'] = array($params['group_ids']);
-      }
-      // Get all mailing lists.
-      $mailing_lists = civicrm_api3('Group', 'get', array(
-        'is_active' => 1,
-        'group_type' => array(
-          'LIKE' => '%2%',
-        ),
-        'option.limit' => 0,
-      ));
-      $mailing_lists = array_keys($mailing_lists['values']);
-
-      // Retrieve all groups the contact is currently member of.
-      $current_groups_result = civicrm_api3('Contact', 'getsingle', array(
-        'sequential' => 1,
-        'return' => 'group',
-        'option.limit' => 0,
-        'contact_id' => $contact_id,
-      ));
-      $current_groups_unfiltered = explode(',', $current_groups_result['groups']);
-      // Filter for mailing lists only.
-      $current_groups = array_intersect($current_groups_unfiltered, $mailing_lists);
-      // Decide which mailing list the contact is to be removed from.
-      $remove = array_diff($current_groups, $params['group_ids']);
-
-      // Add the contact to all requested groups.
-      foreach ($params['group_ids'] as $group_id) {
-        $group_contacts[$group_id] = civicrm_api3('GroupContact', 'create', array(
-          'group_id' => $group_id,
-          'contact_id' => $contact_id,
-          'status' => 'Added',
-        ));
-      }
-      // Remove the contact from all other mailing lists they have been member
-      // of before.
-      foreach ($remove as $group_id) {
-        $group_contacts[$group_id] = civicrm_api3('GroupContact', 'create', array(
-          'group_id' => $group_id,
-          'contact_id' => $contact_id,
-          'status' => 'Removed',
-        ));
-      }
-
-      // Set custom field.
-//      $current_subjects = civicrm_api3('Contact', 'getsingle', array(
-//        'return' => 'custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS,
-//        'id' => $contact_id,
-//      ));
-//      if (!empty($current_subjects['custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS])) {
-//        $current_subjects = array_values($current_subjects['custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS]);
-//      }
-//      else {
-//        $current_subjects = array();
-//      }
-//      $subjects = array_unique(array_merge($current_subjects, $params['group_ids']));
-      // Do not merge, but overwrite the current selection, therefore the above
-      // is commented.
-      $subjects = $params['group_ids'];
-      civicrm_api3('Contact', 'create', array(
-        'id' => $contact_id,
-        'custom_' . CRM_StiftungNVAPI_Submission::CUSTOM_FIELD_ID_SUBJECTS => $subjects,
-      ));
+      $group_contacts = CRM_StiftungNVAPI_Submission::subscribeNewsletter(
+        $contact_id,
+        $params['group_ids']
+      );
     }
 
-    return civicrm_api3_create_success($group_contacts, $params, NULL, NULL, $dao = NULL, array());
+    return civicrm_api3_create_success($group_contacts, $params);
 
   }
   catch (CiviCRM_API3_Exception $exception) {
     if (defined('STIFTUNGNV_API_LOGGING') && STIFTUNGNV_API_LOGGING) {
-      CRM_Core_Error::debug_log_message('StiftungNVNewsletterSubscription:submit:Exception caught: ' . $exception->getMessage());
+      CRM_Core_Error::debug_log_message(
+        'StiftungNVNewsletterSubscription:submit:Exception caught: '
+        . $exception->getMessage()
+      );
     }
 
     $extraParams = $exception->getExtraParams();
