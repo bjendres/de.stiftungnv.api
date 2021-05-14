@@ -224,8 +224,7 @@ function civicrm_api3_stiftung_n_v_event_registration_Submit($params) {
           'activity_type_id',
           'delete_contact'
         ),
-        // TODO: time() + X days.
-        'activity_date_time' => date_create('today + 365 days')
+        'activity_date_time' => date_create('today + 30 days')
           ->format('YmdHis'),
         'status_id' => 'Scheduled',
         'subject' => E::ts('Delete contact without GDPR consent'),
